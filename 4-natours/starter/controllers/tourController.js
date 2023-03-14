@@ -1,4 +1,5 @@
 const Tour = require('./../models/tourModel');
+const APIFeatures = require('./../utils/apiFeatures');
 
 /* exports.checkBody = (req, res, next) => {
   if (!req.body.name || !req.body.price) {
@@ -10,17 +11,24 @@ const Tour = require('./../models/tourModel');
   next();
 }; */
 
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
   try {
-    console.log(req.query);
-    const tours = await Tour.find(req.query);
+    //NOTE: Execute Query
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .pagination();
+    const tours = await features.query;
 
-    /* const tours = await Tour.find()
-      .where('duration')
-      .equals(5)
-      .where('difficulty')
-      .equals('easy'); */
-
+    //NOTE: Send Query
     res.status(200).json({
       status: 'success',
       results: tours.length,
